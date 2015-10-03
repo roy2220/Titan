@@ -23,3 +23,9 @@
 
 #define __STRINGIZE(text) \
     #text
+
+#define STATIC_ASSERT(expression)          \
+    do {                                   \
+        char dummy[(expression) ? 1 : -1]; \
+        (void)dummy;                       \
+    } while (0)
