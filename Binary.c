@@ -240,6 +240,9 @@ PackBytes(char *buffer, size_t bufferSize, const char *bytes, size_t numberOfByt
 ptrdiff_t
 UnpackBytes(const char *data, size_t dataSize, const char **bytes, size_t *numberOfBytes)
 {
+    assert(data != NULL || dataSize == 0);
+    assert(bytes != NULL);
+    assert(numberOfBytes != NULL);
     intmax_t temp;
     ptrdiff_t result = UnpackInteger(data, dataSize, &temp);
 
