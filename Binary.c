@@ -109,7 +109,7 @@ UnpackInteger64(const char *data, size_t dataSize, int64_t *integer)
 
 
 ptrdiff_t
-PackInteger(char *buffer, size_t bufferSize, intmax_t integer)
+PackVariableLengthInteger(char *buffer, size_t bufferSize, intmax_t integer)
 {
     assert(buffer != NULL || bufferSize == 0);
     intmax_t sign = integer >> sizeof integer * CHAR_BIT - 1;
@@ -150,7 +150,7 @@ PackInteger(char *buffer, size_t bufferSize, intmax_t integer)
 
 
 ptrdiff_t
-UnpackInteger(const char *data, size_t dataSize, intmax_t *integer)
+UnpackVariableLengthInteger(const char *data, size_t dataSize, intmax_t *integer)
 {
     assert(data != NULL || dataSize == 0);
     assert(integer != NULL);
@@ -226,7 +226,7 @@ PackBytes(char *buffer, size_t bufferSize, const char *bytes, size_t numberOfByt
 {
     assert(buffer != NULL || bufferSize == 0);
     assert(bytes != NULL || numberOfBytes == 0);
-    ptrdiff_t result = PackInteger(buffer, bufferSize, numberOfBytes);
+    ptrdiff_t result = PackVariableLengthInteger(buffer, bufferSize, numberOfBytes);
 
     if (result < 0) {
         return result;
@@ -249,7 +249,7 @@ UnpackBytes(const char *data, size_t dataSize, const char **bytes, size_t *numbe
     assert(bytes != NULL);
     assert(numberOfBytes != NULL);
     intmax_t temp;
-    ptrdiff_t result = UnpackInteger(data, dataSize, &temp);
+    ptrdiff_t result = UnpackVariableLengthInteger(data, dataSize, &temp);
 
     if (result < 0) {
         return result;
