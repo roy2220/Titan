@@ -17,7 +17,7 @@
     assert(buffer != NULL || bufferSize == 0);    \
     ptrdiff_t n = sizeof integer;                 \
                                                   \
-    if (bufferSize < n) {                         \
+    if (bufferSize < (size_t)n) {                 \
         errno = ENOBUFS;                          \
         return bufferSize - n;                    \
     }                                             \
@@ -37,7 +37,7 @@
     assert(integer != NULL);                                      \
     ptrdiff_t n = sizeof *integer;                                \
                                                                   \
-    if (dataSize < n) {                                           \
+    if (dataSize < (size_t)n) {                                   \
         errno = ENODATA;                                          \
         return dataSize - n;                                      \
     }                                                             \
@@ -112,7 +112,7 @@ ptrdiff_t
 PackVariableLengthInteger(char *buffer, size_t bufferSize, intmax_t integer)
 {
     assert(buffer != NULL || bufferSize == 0);
-    intmax_t sign = integer >> sizeof integer * CHAR_BIT - 1;
+    intmax_t sign = integer >> (sizeof integer * CHAR_BIT - 1);
 
     if (integer >> 6 == sign) {
         return PackInteger8(buffer, bufferSize, integer & UINTMAX_C(0x7F));
@@ -162,7 +162,7 @@ UnpackVariableLengthInteger(const char *data, size_t dataSize, intmax_t *integer
 
     char data0 = data[0];
 
-    if ((data0 & 1 << CHAR_BIT - 1) == 0) {
+    if ((data0 & 1 << (CHAR_BIT - 1)) == 0) {
         int8_t temp;
         ptrdiff_t result = UnpackInteger8(data, dataSize, &temp);
 
@@ -174,7 +174,7 @@ UnpackVariableLengthInteger(const char *data, size_t dataSize, intmax_t *integer
         return result;
     }
 
-    if ((data0 & 1 << CHAR_BIT - 2) == 0) {
+    if ((data0 & 1 << (CHAR_BIT - 2)) == 0) {
         int16_t temp;
         ptrdiff_t result = UnpackInteger16(data, dataSize, &temp);
 
@@ -186,7 +186,7 @@ UnpackVariableLengthInteger(const char *data, size_t dataSize, intmax_t *integer
         return result;
     }
 
-    if ((data0 & 1 << CHAR_BIT - 3) == 0) {
+    if ((data0 & 1 << (CHAR_BIT - 3)) == 0) {
         int32_t temp;
         ptrdiff_t result = UnpackInteger32(data, dataSize, &temp);
 
@@ -198,7 +198,7 @@ UnpackVariableLengthInteger(const char *data, size_t dataSize, intmax_t *integer
         return result;
     }
 
-    if ((data0 & 1 << CHAR_BIT - 4) == 0) {
+    if ((data0 & 1 << (CHAR_BIT - 4)) == 0) {
         int64_t temp;
         ptrdiff_t result = UnpackInteger64(data, dataSize, &temp);
 
