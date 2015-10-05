@@ -15,9 +15,10 @@
 
 #define PACK_INTEGER(buffer, bufferSize, integer) \
     assert(buffer != NULL || bufferSize == 0);    \
+    assert(bufferSize <= PTRDIFF_MAX);            \
     ptrdiff_t n = sizeof integer;                 \
                                                   \
-    if (bufferSize < (size_t)n) {                 \
+    if ((ptrdiff_t)bufferSize < n) {              \
         errno = ENOBUFS;                          \
         return bufferSize - n;                    \
     }                                             \
@@ -34,10 +35,11 @@
 
 #define UNPACK_INTEGER(data, dataSize, integer)                   \
     assert(data != NULL || dataSize == 0);                        \
+    assert(dataSize <= PTRDIFF_MAX);                              \
     assert(integer != NULL);                                      \
     ptrdiff_t n = sizeof *integer;                                \
                                                                   \
-    if (dataSize < (size_t)n) {                                   \
+    if ((ptrdiff_t)dataSize < n) {                                \
         errno = ENODATA;                                          \
         return dataSize - n;                                      \
     }                                                             \
@@ -112,6 +114,7 @@ ptrdiff_t
 PackVariableLengthInteger(char *buffer, size_t bufferSize, intmax_t integer)
 {
     assert(buffer != NULL || bufferSize == 0);
+    assert(bufferSize <= PTRDIFF_MAX);
     intmax_t sign = integer >> (sizeof integer * CHAR_BIT - 1);
 
     if (integer >> 6 == sign) {
@@ -153,6 +156,7 @@ ptrdiff_t
 UnpackVariableLengthInteger(const char *data, size_t dataSize, intmax_t *integer)
 {
     assert(data != NULL || dataSize == 0);
+    assert(dataSize <= PTRDIFF_MAX);
     assert(integer != NULL);
 
     if (dataSize == 0) {
@@ -225,14 +229,16 @@ ptrdiff_t
 PackBytes(char *buffer, size_t bufferSize, const char *bytes, size_t numberOfBytes)
 {
     assert(buffer != NULL || bufferSize == 0);
+    assert(bufferSize <= PTRDIFF_MAX);
     assert(bytes != NULL || numberOfBytes == 0);
+    assert(numberOfBytes <= PTRDIFF_MAX);
     ptrdiff_t result = PackVariableLengthInteger(buffer, bufferSize, numberOfBytes);
 
     if (result < 0) {
         return result;
     }
 
-    if (bufferSize < result + numberOfBytes) {
+    if (bufferSize - result < numberOfBytes) {
         errno = ENOBUFS;
         return bufferSize - result - numberOfBytes;
     }
@@ -246,6 +252,7 @@ ptrdiff_t
 UnpackBytes(const char *data, size_t dataSize, const char **bytes, size_t *numberOfBytes)
 {
     assert(data != NULL || dataSize == 0);
+    assert(dataSize <= PTRDIFF_MAX);
     assert(bytes != NULL);
     assert(numberOfBytes != NULL);
     intmax_t temp;
@@ -257,7 +264,12 @@ UnpackBytes(const char *data, size_t dataSize, const char **bytes, size_t *numbe
 
     *numberOfBytes = temp;
 
-    if (dataSize < result + *numberOfBytes) {
+    if (*numberOfBytes > PTRDIFF_MAX) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    if (dataSize - result < *numberOfBytes) {
         errno = ENODATA;
         return dataSize - result - *numberOfBytes;
     }
