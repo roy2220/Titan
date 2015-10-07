@@ -13,101 +13,79 @@
 #include "Utility.h"
 
 
-#define PACK_INTEGER(buffer, bufferSize, integer) \
-    assert(buffer != NULL || bufferSize == 0);    \
-    assert(bufferSize <= PTRDIFF_MAX);            \
-    ptrdiff_t n = sizeof integer;                 \
-                                                  \
-    if ((ptrdiff_t)bufferSize < n) {              \
-        errno = ENOBUFS;                          \
-        return bufferSize - n;                    \
-    }                                             \
-                                                  \
-    buffer[n - 1] = integer;                      \
-    ptrdiff_t i;                                  \
-                                                  \
-    for (i = n - 2; i >= 0; --i) {                \
-        integer >>= CHAR_BIT;                     \
-        buffer[i] = integer;                      \
-    }                                             \
-                                                  \
-    return n
+#define INTEGER_PACKER(n)                                               \
+    ptrdiff_t                                                           \
+    PackInteger##n(char *buffer, size_t bufferSize, int##n##_t integer) \
+    {                                                                   \
+        assert(buffer != NULL || bufferSize == 0);                      \
+        assert(bufferSize <= PTRDIFF_MAX);                              \
+                                                                        \
+        if (bufferSize < sizeof integer) {                              \
+            errno = ENOBUFS;                                            \
+            return bufferSize - sizeof integer;                         \
+        }                                                               \
+                                                                        \
+        buffer[sizeof integer - 1] = integer;                           \
+        ptrdiff_t i;                                                    \
+                                                                        \
+        for (i = sizeof integer - 2; i >= 0; --i) {                     \
+            integer >>= CHAR_BIT;                                       \
+            buffer[i] = integer;                                        \
+        }                                                               \
+                                                                        \
+        return sizeof integer;                                          \
+    }
 
-#define UNPACK_INTEGER(data, dataSize, integer)                   \
-    assert(data != NULL || dataSize == 0);                        \
-    assert(dataSize <= PTRDIFF_MAX);                              \
-    assert(integer != NULL);                                      \
-    ptrdiff_t n = sizeof *integer;                                \
-                                                                  \
-    if ((ptrdiff_t)dataSize < n) {                                \
-        errno = ENODATA;                                          \
-        return dataSize - n;                                      \
-    }                                                             \
-                                                                  \
-    *integer = (unsigned char)data[0];                            \
-    ptrdiff_t i;                                                  \
-                                                                  \
-    for (i = 1; i < n; ++i) {                                     \
-        *integer = *integer << CHAR_BIT | (unsigned char)data[i]; \
-    }                                                             \
-                                                                  \
-    return n
-
-
-ptrdiff_t
-PackInteger8(char *buffer, size_t bufferSize, int8_t integer)
-{
-    PACK_INTEGER(buffer, bufferSize, integer);
-}
-
-
-ptrdiff_t
-UnpackInteger8(const char *data, size_t dataSize, int8_t *integer)
-{
-    UNPACK_INTEGER(data, dataSize, integer);
-}
+#define INTEGER_UNPACKER(n)                                                  \
+    ptrdiff_t                                                                \
+    UnpackInteger##n(const char *data, size_t dataSize, int##n##_t *integer) \
+    {                                                                        \
+        assert(data != NULL || dataSize == 0);                               \
+        assert(dataSize <= PTRDIFF_MAX);                                     \
+        assert(integer != NULL);                                             \
+                                                                             \
+        if (dataSize < sizeof *integer) {                                    \
+            errno = ENODATA;                                                 \
+            return dataSize - sizeof *integer;                               \
+        }                                                                    \
+                                                                             \
+        *integer = (unsigned char)data[0];                                   \
+        ptrdiff_t i;                                                         \
+                                                                             \
+        for (i = 1; i < (ptrdiff_t)sizeof *integer; ++i) {                   \
+            *integer = *integer << CHAR_BIT | (unsigned char)data[i];        \
+        }                                                                    \
+                                                                             \
+        return sizeof *integer;                                              \
+    }
 
 
-ptrdiff_t
-PackInteger16(char *buffer, size_t bufferSize, int16_t integer)
-{
-    PACK_INTEGER(buffer, bufferSize, integer);
-}
+INTEGER_PACKER(8)
 
 
-ptrdiff_t
-UnpackInteger16(const char *data, size_t dataSize, int16_t *integer)
-{
-    UNPACK_INTEGER(data, dataSize, integer);
-}
+INTEGER_UNPACKER(8)
 
 
-ptrdiff_t
-PackInteger32(char *buffer, size_t bufferSize, int32_t integer)
-{
-    PACK_INTEGER(buffer, bufferSize, integer);
-}
+INTEGER_PACKER(16)
 
 
-ptrdiff_t
-UnpackInteger32(const char *data, size_t dataSize, int32_t *integer)
-{
-    UNPACK_INTEGER(data, dataSize, integer);
-}
+INTEGER_UNPACKER(16)
 
 
-ptrdiff_t
-PackInteger64(char *buffer, size_t bufferSize, int64_t integer)
-{
-    PACK_INTEGER(buffer, bufferSize, integer);
-}
+INTEGER_PACKER(32)
 
 
-ptrdiff_t
-UnpackInteger64(const char *data, size_t dataSize, int64_t *integer)
-{
-    UNPACK_INTEGER(data, dataSize, integer);
-}
+INTEGER_UNPACKER(32)
+
+
+INTEGER_PACKER(64)
+
+
+INTEGER_UNPACKER(64)
+
+
+#undef INTEGER_PACKER
+#undef INTEGER_UNPACKER
 
 
 ptrdiff_t
