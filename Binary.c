@@ -96,21 +96,21 @@ PackVariableLengthInteger(intmax_t integer, char *buffer, size_t bufferSize)
     intmax_t sign = integer >> (sizeof integer * CHAR_BIT - 1);
 
     if (integer >> 6 == sign) {
-        return PackInteger8(buffer, bufferSize, integer & UINTMAX_C(0x7F));
+        return PackInteger8(integer & UINTMAX_C(0x7F), buffer, bufferSize);
     }
 
     if (integer >> 13 == sign) {
-        return PackInteger16(buffer, bufferSize, (integer | UINTMAX_C(0x8000)) & UINTMAX_C(0xBFFF));
+        return PackInteger16((integer | UINTMAX_C(0x8000)) & UINTMAX_C(0xBFFF), buffer, bufferSize);
     }
 
     if (integer >> 28 == sign) {
-        return PackInteger32(buffer, bufferSize, (integer | UINTMAX_C(0xC0000000))
-                                                 & UINTMAX_C(0xDFFFFFFF));
+        return PackInteger32((integer | UINTMAX_C(0xC0000000)) & UINTMAX_C(0xDFFFFFFF), buffer
+                             , bufferSize);
     }
 
     if (integer >> 59 == sign) {
-        return PackInteger64(buffer, bufferSize, (integer | UINTMAX_C(0xE000000000000000))
-                                                 & UINTMAX_C(0xEFFFFFFFFFFFFFFF));
+        return PackInteger64((integer | UINTMAX_C(0xE000000000000000))
+                             & UINTMAX_C(0xEFFFFFFFFFFFFFFF), buffer, bufferSize);
     }
 
     if (bufferSize < 1) {
@@ -120,7 +120,7 @@ PackVariableLengthInteger(intmax_t integer, char *buffer, size_t bufferSize)
 
     buffer[0] = UCHAR_MAX;
     STATIC_ASSERT(sizeof(intmax_t) == sizeof(int64_t));
-    ptrdiff_t result = PackInteger64(buffer + 1, bufferSize - 1, integer);
+    ptrdiff_t result = PackInteger64(integer, buffer + 1, bufferSize - 1);
 
     if (result < 0) {
         return result;
@@ -210,7 +210,7 @@ PackBytes(const char *bytes, size_t numberOfBytes, char *buffer, size_t bufferSi
     assert(numberOfBytes <= PTRDIFF_MAX);
     assert(buffer != NULL || bufferSize == 0);
     assert(bufferSize <= PTRDIFF_MAX);
-    ptrdiff_t result = PackVariableLengthInteger(buffer, bufferSize, numberOfBytes);
+    ptrdiff_t result = PackVariableLengthInteger(numberOfBytes, buffer, bufferSize);
 
     if (result < 0) {
         return result;
