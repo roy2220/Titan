@@ -15,7 +15,7 @@
 
 #define INTEGER_PACKER(n)                                               \
     ptrdiff_t                                                           \
-    PackInteger##n(char *buffer, size_t bufferSize, int##n##_t integer) \
+    PackInteger##n(int##n##_t integer, char *buffer, size_t bufferSize) \
     {                                                                   \
         assert(buffer != NULL || bufferSize == 0);                      \
         assert(bufferSize <= PTRDIFF_MAX);                              \
@@ -89,7 +89,7 @@ INTEGER_UNPACKER(64)
 
 
 ptrdiff_t
-PackVariableLengthInteger(char *buffer, size_t bufferSize, intmax_t integer)
+PackVariableLengthInteger(intmax_t integer, char *buffer, size_t bufferSize)
 {
     assert(buffer != NULL || bufferSize == 0);
     assert(bufferSize <= PTRDIFF_MAX);
@@ -113,7 +113,7 @@ PackVariableLengthInteger(char *buffer, size_t bufferSize, intmax_t integer)
                                                  & UINTMAX_C(0xEFFFFFFFFFFFFFFF));
     }
 
-    if (bufferSize == 0) {
+    if (bufferSize < 1) {
         errno = ENOBUFS;
         return -1;
     }
@@ -137,7 +137,7 @@ UnpackVariableLengthInteger(const char *data, size_t dataSize, intmax_t *integer
     assert(dataSize <= PTRDIFF_MAX);
     assert(integer != NULL);
 
-    if (dataSize == 0) {
+    if (dataSize < 1) {
         errno = ENODATA;
         return -1;
     }
@@ -204,12 +204,12 @@ UnpackVariableLengthInteger(const char *data, size_t dataSize, intmax_t *integer
 
 
 ptrdiff_t
-PackBytes(char *buffer, size_t bufferSize, const char *bytes, size_t numberOfBytes)
+PackBytes(const char *bytes, size_t numberOfBytes, char *buffer, size_t bufferSize)
 {
-    assert(buffer != NULL || bufferSize == 0);
-    assert(bufferSize <= PTRDIFF_MAX);
     assert(bytes != NULL || numberOfBytes == 0);
     assert(numberOfBytes <= PTRDIFF_MAX);
+    assert(buffer != NULL || bufferSize == 0);
+    assert(bufferSize <= PTRDIFF_MAX);
     ptrdiff_t result = PackVariableLengthInteger(buffer, bufferSize, numberOfBytes);
 
     if (result < 0) {
